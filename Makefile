@@ -25,8 +25,12 @@ help: ## Display help message
 ##@ Development Goals
 image: ## Build the container image
 	docker buildx build -t ${TAG} \
+	-t ${REGISTRY_IMAGE}:latest \
+	-t ${REGISTRY_IMAGE}:v${BIRD_VERSION} \
+	-t ${REGISTRY_IMAGE}:git-${REVISION} \
 	-o type=image,oci-mediatypes=true,compression=estargz,force-compression=true,annotation.org.opencontainers.image.source=${REPO},annotation.org.opencontainers.image.revision=$(REVISION) \
 	--build-arg BIRD_VERSION=${BIRD_VERSION} \
 	--platform linux/amd64,linux/arm64 \
+	--cache-from type=registry,ref=${REGISTRY_IMAGE}:v${BIRD_VERSION} \
 	--push \
 	.
