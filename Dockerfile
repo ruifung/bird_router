@@ -1,12 +1,15 @@
-FROM ubuntu:18.04 AS builder
-RUN apt update
-RUN apt -y upgrade
+ARG BIRD_VERSION=2.14
+
+FROM debian:12.2-slim AS builder
+ARG BIRD_VERSION=2.14
+RUN apt-get update
+RUN apt-get -y upgrade
 RUN apt-get -q -y install \
   iproute2 \
   tcpdump \
   iputils-ping \
   readline-common \
-  libreadline7 \
+  libreadline8 \
   libssh-4 \
   inotify-tools \
   curl \
@@ -18,26 +21,28 @@ RUN apt-get -q -y install \
   libssh-dev \
   git
 
-RUN curl -LOk https://bird.network.cz/download/bird-2.0.9.tar.gz
-RUN tar xvf bird-2.0.9.tar.gz
-WORKDIR /bird-2.0.9
+RUN echo Downloading https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz
+RUN curl -LOk https://bird.network.cz/download/bird-${BIRD_VERSION}.tar.gz
+RUN tar xvf bird-${BIRD_VERSION}.tar.gz
+WORKDIR /bird-${BIRD_VERSION}
 RUN ./configure
 RUN make
 
-FROM ubuntu:18.04
-RUN apt update
-RUN apt -y upgrade
+FROM debian:12.2-slim
+ARG BIRD_VERSION=2.14
+RUN apt-get update
+RUN apt-get -y upgrade
 RUN apt-get -q -y install \
   iproute2 \
   tcpdump \
   iputils-ping \
   readline-common \
-  libreadline7 \
+  libreadline8 \
   libssh-4 \
   inotify-tools
 RUN mkdir -p /usr/local/var/run
-COPY --from=builder /bird-2.0.9/bird /usr/local/sbin/bird
-COPY --from=builder /bird-2.0.9/birdc /usr/local/sbin/birdc
+COPY --from=builder /bird-${BIRD_VERSION}/bird /usr/local/sbin/bird
+COPY --from=builder /bird-${BIRD_VERSION}/birdc /usr/local/sbin/birdc
 COPY birdvars.conf /usr/local/include/birdvars.conf
 COPY wrapper.sh /wrapper.sh
 COPY reconfig.sh /reconfig.sh

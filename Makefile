@@ -1,8 +1,12 @@
-PROJECT ?= bird
-REGISTRY ?= registry.gitlab.com
+REPO ?= https://github.com/ruifung/bird_router
+PROJECT ?= bird_router
+REGISTRY ?= ghcr.io/ruifung
+BIRD_VERSION ?= 2.14
+BUILD_VERSION ?= 1
 REGISTRY_IMAGE ?= ${REGISTRY}/${PROJECT}
-SUFFIX ?= v0.0.0-dev
+SUFFIX ?= v${BIRD_VERSION}-${BUILD_VERSION}
 TAG ?= ${REGISTRY_IMAGE}:${SUFFIX}
+REVISION := $(shell git rev-parse HEAD)
 
 .PHONY: help image install
 
@@ -12,6 +16,7 @@ help: ## Display help message
 	@echo "\nVariables"
 	@echo "  REGISTRY       Container registry address"
 	@echo "  SUFFIX         Image tag suffix (the part after ':')"
+	@echo "  BIRD_VERSION   Version of BIRD to use"
 	@awk 'BEGIN {FS = "[:=].*##"}; \
 		/^[A-Z]+=.*?##/ { printf "  %-15s %s\n", $$1, $$2 } \
 		/^[%a-zA-Z0-9_-]+:.*?##/ { printf "  %-15s %s\n", $$1, $$2 } \
@@ -19,7 +24,9 @@ help: ## Display help message
 
 ##@ Development Goals
 image: ## Build the container image
-	docker build -t ${TAG} .
-
-install: ## Push the container image to the registry
-	docker push ${TAG}
+	docker buildx build -t ${TAG} \
+	-o type=image,oci-mediatypes=true,compression=estargz,force-compression=true,annotation.org.opencontainers.image.source=${REPO},annotation.org.opencontainers.image.revision=$(REVISION) \
+	--build-arg BIRD_VERSION=${BIRD_VERSION} \
+	--platform linux/amd64,linux/arm64 \
+	--push \
+	.
