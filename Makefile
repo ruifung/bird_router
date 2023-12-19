@@ -31,6 +31,7 @@ image: ## Build the container image
 	-o type=image,oci-mediatypes=true,compression=estargz,force-compression=true,annotation.org.opencontainers.image.source=${REPO},annotation.org.opencontainers.image.revision=$(REVISION) \
 	--build-arg BIRD_VERSION=${BIRD_VERSION} \
 	--platform linux/amd64,linux/arm64 \
-	--cache-from type=registry,ref=${REGISTRY_IMAGE}:v${BIRD_VERSION} \
+	--cache-from type=registry,ref=${REGISTRY_IMAGE}:build-cache-v${BIRD_VERSION} \
+	--cache-to type=registry,ref=${REGISTRY_IMAGE}:build-cache-v${BIRD_VERSION} \
 	--push \
 	.
